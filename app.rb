@@ -3,7 +3,10 @@ require 'sinatra/activerecord'
 Dir['./app/models/**/*.rb'].each { |file| require file }
 
 class App < Sinatra::Base
-  before { content_type :json }
+  before do
+    content_type :json
+    response.headers['Access-Control-Allow-Origin'] = '*'
+  end
 
   get '/songs' do
     Song.select(:id, :file_id, :title, 'a.name artist_name, l.title album_title')
