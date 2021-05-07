@@ -20,6 +20,10 @@ class App < Sinatra::Base
       .map { |s| serialize(s) }
       .to_json
   end
+  
+  get '/env_test' do
+    { foo: Sinatra::Application.environment }.to_json
+  end
 
   private
 
