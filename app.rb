@@ -1,8 +1,16 @@
 require 'sinatra/base'
-require 'sinatra/activerecord'
-Dir['./app/models/**/*.rb'].each { |file| require file }
+require 'pg'
+require './db_connection'
 
 class App < Sinatra::Base
+  SONGS_SQL = <<-SQL
+    select s.id, s.file_id, s.title, a.name artist
+    from songs s
+    left join artists a on a.id = s.artist_id
+    where s.file_id is not null
+    order by artist
+  SQL
+
   before do
     content_type :json
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -13,22 +21,12 @@ class App < Sinatra::Base
   end
 
   get '/songs' do
-    Song.select(:id, :file_id, :title, 'a.name artist_name')
-      .joins('left join artists a on songs.artist_id = a.id')
-      .where.not(file_id: nil)
-      .order('artist_name')
-      .map { |s| serialize(s) }
-      .to_json
+    db_query(SONGS_SQL).to_a.to_json
   end
 
   private
 
-  def serialize(song)
-    {
-      id: song.id,
-      artist: song.artist_name,
-      file_id: song.file_id,
-      title: song.title
-    }
+  def db_query(q)
+    DB_CONNECTION.exec(q)
   end
 end
